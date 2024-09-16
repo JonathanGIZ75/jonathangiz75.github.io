@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de Sorteos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-form" id="login">
+            <h2>Iniciar sesión</h2>
+            <input type="text" id="login-username" placeholder="Nombre de usuario">
+            <input type="password" id="login-password" placeholder="Contraseña">
+            <button onclick="login()">Ingresar</button>
+            <p>¿No tienes una cuenta? <a href="#" onclick="showRegister()">Regístrate aquí</a></p>
+            <div class="error" id="login-error"></div>
+        </div>
+
+        <div class="auth-form hidden" id="register">
+            <h2>Registrarse</h2>
+            <input type="text" id="register-username" placeholder="Nombre de usuario">
+            <input type="password" id="register-password" placeholder="Contraseña">
+            <button onclick="register()">Registrarse</button>
+            <p>¿Ya tienes una cuenta? <a href="#" onclick="showLogin()">Inicia sesión aquí</a></p>
+            <div class="error" id="register-error"></div>
+        </div>
+    </div>
+
+    <div class="hidden" id="game-container">
+        <h1>¡Gira la Ruleta y Gana!</h1>
+        <div class="content">
+            <div class="wheel-container">
+                <canvas id="wheel" width="500" height="500"></canvas>
+                <button id="spin-btn" onclick="spinWheel()">¡Girar!</button>
+                <p id="ticket-count">Tickets disponibles: 0</p>
+                <div id="result"></div>
+            </div>
+
+            <div class="ticket-shop">
+                <h2>Compra tus tickets</h2>
+                <div class="ticket-option">
+                    <p>1 Ticket - 1 Euro</p>
+                    <button class="buy-btn" onclick="buyTickets(1)">Comprar</button>
+                </div>
+                <div class="ticket-option">
+                    <p>2 Tickets - 2 Euros</p>
+                    <button class="buy-btn" onclick="buyTickets(2)">Comprar</button>
+                </div>
+                <div class="ticket-option">
+                    <p>10 Tickets - 10 Euros</p>
+                    <button class="buy-btn" onclick="buyTickets(10)">Comprar</button>
+                </div>
+            </div>
+        </div>
+        <button onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
