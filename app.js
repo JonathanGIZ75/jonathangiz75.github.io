@@ -125,6 +125,15 @@ function drawWheel() {
         ctx.fillText(prizes[i], 130, 10);
         ctx.restore();
     }
+
+    // Dibujar la flecha indicadora
+    ctx.beginPath();
+    ctx.moveTo(250, 0);
+    ctx.lineTo(240, 40);
+    ctx.lineTo(260, 40);
+    ctx.closePath();
+    ctx.fillStyle = "#333";
+    ctx.fill();
 }
 
 function spinWheel() {
