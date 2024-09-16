@@ -3,7 +3,8 @@ body {
     background-color: #f4f4f4;
     margin: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
     height: 100vh;
 }
@@ -49,6 +50,7 @@ body {
 #wheel {
     border-radius: 50%;
     border: 5px solid #333;
+    margin-bottom: 20px;
 }
 
 .ticket-shop h2 {
@@ -71,4 +73,24 @@ button {
 
 button:hover {
     background-color: #218838;
+}
+
+#wheel-container {
+    margin-bottom: 40px;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    width: 100%;
+}
+
+canvas {
+    display: block;
+    margin: auto;
+}
+
+#game-container {
+    margin-top: auto;
 }
