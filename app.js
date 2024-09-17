@@ -35,10 +35,17 @@ function showRegister() {
 function register() {
     const username = document.getElementById("register-username").value;
     const password = document.getElementById("register-password").value;
+    const confirmPassword = document.getElementById("register-confirm-password").value;
+    const email = document.getElementById("register-email").value;
     const errorDisplay = document.getElementById("register-error");
 
-    if (!username || !password) {
+    if (!username || !password || !confirmPassword) {
         errorDisplay.textContent = "Todos los campos son obligatorios.";
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        errorDisplay.textContent = "Las contraseñas no coinciden.";
         return;
     }
 
@@ -47,7 +54,7 @@ function register() {
         return;
     }
 
-    users[username] = { password: password, tickets: 0 };
+    users[username] = { password: password, tickets: 0, email: email };
     localStorage.setItem("users", JSON.stringify(users));
     errorDisplay.textContent = "";
     alert("Usuario registrado exitosamente. Por favor, inicia sesión.");
@@ -79,7 +86,6 @@ function login() {
     const profileName = document.getElementById("profile-name");
     profileName.textContent = currentUser;
 
-    // Si el usuario es Jonathan, darle estilo rojo
     if (currentUser === 'jonathan') {
         profileName.classList.add("admin");
     } else {
@@ -123,7 +129,6 @@ function buyTickets(amount) {
     updateTicketCount();
 }
 
-// Función para girar la ruleta con animación
 function spinWheel() {
     if (tickets <= 0 || isSpinning) {
         alert("No tienes tickets suficientes o la ruleta está girando.");
@@ -141,7 +146,6 @@ function spinWheel() {
     updateTicketCount();
     updateSpinCount();
 
-    // Configurar la velocidad inicial de giro y activar el giro
     spinSpeed = Math.random() * 10 + 10;
     isSpinning = true;
     animateWheel();
@@ -157,9 +161,8 @@ function animateWheel() {
     const totalSegments = segments.length;
     const anglePerSegment = (2 * Math.PI) / totalSegments;
 
-    // Girar la ruleta
     wheelAngle += spinSpeed;
-    spinSpeed *= 0.97; // Desacelerar gradualmente
+    spinSpeed *= 0.97;
 
     if (spinSpeed < 0.1) {
         spinSpeed = 0;
@@ -168,8 +171,7 @@ function animateWheel() {
         document.getElementById("result").textContent = `Resultado: ${segments[selectedSegment]}`;
     }
 
-    // Dibujar la ruleta
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < totalSegments; i++) {
         const startAngle = i * anglePerSegment + wheelAngle;
@@ -180,11 +182,9 @@ function animateWheel() {
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
 
-        // Alternar colores entre amarillo claro y oscuro
         ctx.fillStyle = i % 2 === 0 ? '#ffcc00' : '#ff9900';
         ctx.fill();
 
-        // Dibujar el texto del segmento
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate((startAngle + endAngle) / 2);
@@ -195,13 +195,11 @@ function animateWheel() {
         ctx.restore();
     }
 
-    // Continuar animando mientras esté girando
     if (isSpinning) {
         requestAnimationFrame(animateWheel);
     }
 }
 
-// Dibuja la ruleta al cargar
 function drawWheel() {
     animateWheel();
 }
