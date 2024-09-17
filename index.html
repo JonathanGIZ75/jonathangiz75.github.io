@@ -9,6 +9,7 @@
 </head>
 
 <body>
+    <!-- Contenedor de autenticación (login/register) -->
     <div class="auth-container">
         <div class="auth-form" id="login">
             <h2>Iniciar sesión</h2>
@@ -29,6 +30,15 @@
         </div>
     </div>
 
+    <!-- Contenedor de perfil (una vez logueado) -->
+    <div class="hidden" id="profile-container">
+        <h2>Perfil de Usuario</h2>
+        <p><strong>Nombre:</strong> <span id="profile-name"></span></p>
+        <p><strong>ID:</strong> <span id="profile-id"></span></p>
+        <p><strong>Veces que ha girado la ruleta:</strong> <span id="spin-count">0</span></p>
+    </div>
+
+    <!-- Contenedor del juego de la ruleta -->
     <div class="hidden" id="game-container">
         <h1>¡Gira la Ruleta y Gana!</h1>
         <div class="content">
