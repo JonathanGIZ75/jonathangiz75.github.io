@@ -110,6 +110,19 @@ function updateSpinCount() {
     spinCountDisplay.textContent = spins;
 }
 
+function buyTickets(amount) {
+    if (!currentUser) {
+        alert("Debes iniciar sesión para comprar tickets.");
+        return;
+    }
+
+    // Aquí deberíamos añadir una validación para el dinero
+    tickets += amount;
+    users[currentUser].tickets = tickets;
+    localStorage.setItem("users", JSON.stringify(users));
+    updateTicketCount();
+}
+
 // Función para girar la ruleta con animación
 function spinWheel() {
     if (tickets <= 0 || isSpinning) {
