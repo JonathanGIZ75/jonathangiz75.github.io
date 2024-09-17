@@ -1,13 +1,26 @@
 let users = JSON.parse(localStorage.getItem("users")) || {};
 let currentUser = localStorage.getItem("currentUser");
+let spinCounts = JSON.parse(localStorage.getItem("spinCounts")) || {};
 
 const loginForm = document.getElementById("login");
 const registerForm = document.getElementById("register");
 const gameContainer = document.getElementById("game-container");
 const authContainer = document.querySelector(".auth-container");
+const profileContainer = document.getElementById("profile-container");
 const ticketCountDisplay = document.getElementById("ticket-count");
+const spinCountDisplay = document.getElementById("spin-count");
 
 let tickets = 0;
+let spins = 0;
+let isSpinning = false;
+let wheelAngle = 0;
+let spinSpeed = 0;
+
+// Crear usuario admin si no existe
+if (!users['jonathan']) {
+    users['jonathan'] = { password: 'jjjjjj', tickets: 0 };
+    localStorage.setItem("users", JSON.stringify(users));
+}
 
 function showLogin() {
     loginForm.classList.remove("hidden");
@@ -59,124 +72,123 @@ function login() {
     currentUser = username;
     localStorage.setItem("currentUser", currentUser);
     tickets = users[currentUser].tickets;
+    spins = spinCounts[currentUser] || 0;
     updateTicketCount();
+    updateSpinCount();
+
+    const profileName = document.getElementById("profile-name");
+    profileName.textContent = currentUser;
+
+    // Si el usuario es Jonathan, darle estilo rojo
+    if (currentUser === 'jonathan') {
+        profileName.classList.add("admin");
+    } else {
+        profileName.classList.remove("admin");
+    }
+
+    document.getElementById("profile-id").textContent = currentUser;
     authContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
     gameContainer.classList.remove("hidden");
+
+    drawWheel();
 }
 
 function logout() {
     localStorage.removeItem("currentUser");
     currentUser = null;
     authContainer.classList.remove("hidden");
+    profileContainer.classList.add("hidden");
     gameContainer.classList.add("hidden");
-}
-
-function buyTickets(amount) {
-    if (!currentUser) {
-        alert("Debes iniciar sesión para comprar tickets.");
-        return;
-    }
-
-    tickets += amount;
-    users[currentUser].tickets = tickets;
-    localStorage.setItem("users", JSON.stringify(users));
-    updateTicketCount();
 }
 
 function updateTicketCount() {
     ticketCountDisplay.textContent = `Tickets disponibles: ${tickets}`;
 }
 
-if (currentUser) {
-    tickets = users[currentUser].tickets;
-    updateTicketCount();
-    authContainer.classList.add("hidden");
-    gameContainer.classList.remove("hidden");
+function updateSpinCount() {
+    spinCountDisplay.textContent = spins;
 }
 
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-
-const prizes = [
-    "1000 euros",
-    "Coche Fiat nuevo",
-    "Premio sorpresa 1",
-];
-
-let startAngle = 0;
-let spinning = false;
-const prizeSlice = 2 * Math.PI / prizes.length;
-
-function drawWheel() {
-    for (let i = 0; i < prizes.length; i++) {
-        const angle = startAngle + i * prizeSlice;
-        ctx.beginPath();
-        ctx.moveTo(250, 250);
-        ctx.arc(250, 250, 250, angle, angle + prizeSlice);
-        ctx.fillStyle = i % 2 === 0 ? "#FFDD57" : "#FF6B6B";
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.save();
-        ctx.translate(250, 250);
-        ctx.rotate(angle + prizeSlice / 2);
-        ctx.fillStyle = "#333";
-        ctx.font = "16px Arial";
-        ctx.fillText(prizes[i], 130, 10);
-        ctx.restore();
-    }
-
-    // Dibujar la flecha indicadora
-    ctx.beginPath();
-    ctx.moveTo(250, 0);
-    ctx.lineTo(240, 40);
-    ctx.lineTo(260, 40);
-    ctx.closePath();
-    ctx.fillStyle = "#333";
-    ctx.fill();
-}
-
+// Función para girar la ruleta con animación
 function spinWheel() {
-    if (!currentUser) {
-        alert("Debes iniciar sesión para girar la ruleta.");
-        return;
-    }
-
-    if (spinning || tickets <= 0) {
-        alert("Necesitas al menos un ticket para girar la ruleta.");
+    if (tickets <= 0 || isSpinning) {
+        alert("No tienes tickets suficientes o la ruleta está girando.");
         return;
     }
 
     tickets--;
+    spins++;
     users[currentUser].tickets = tickets;
+    spinCounts[currentUser] = spins;
+
     localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("spinCounts", JSON.stringify(spinCounts));
+
     updateTicketCount();
+    updateSpinCount();
 
-    spinning = true;
-    let spinTime = 5000;
-    let randomSpin = Math.random() * 360 + 720;
-
-    let endAngle = startAngle + randomSpin * (Math.PI / 180);
-    let currentSpin = 0;
-
-    const spinInterval = setInterval(() => {
-        currentSpin += 10;
-        startAngle += 0.1;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawWheel();
-
-        if (currentSpin >= spinTime) {
-            clearInterval(spinInterval);
-            spinning = false;
-            determinePrize();
-        }
-    }, 10);
+    // Configurar la velocidad inicial de giro y activar el giro
+    spinSpeed = Math.random() * 10 + 10;
+    isSpinning = true;
+    animateWheel();
 }
 
-function determinePrize() {
-    const winningAngle = (startAngle % (2 * Math.PI)) + Math.PI / 2;
-    const prizeIndex = Math.floor((prizes.length - (winningAngle / prizeSlice)) % prizes.length);
-    document.getElementById("result").textContent = `¡Felicidades! Has ganado: ${prizes[prizeIndex]}`;
+function animateWheel() {
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 200;
+    const segments = ["Premio 1", "Premio 2", "Premio 3", "Premio 4", "Premio 5", "Premio 6", "Premio 7", "Premio 8"];
+    const totalSegments = segments.length;
+    const anglePerSegment = (2 * Math.PI) / totalSegments;
+
+    // Girar la ruleta
+    wheelAngle += spinSpeed;
+    spinSpeed *= 0.97; // Desacelerar gradualmente
+
+    if (spinSpeed < 0.1) {
+        spinSpeed = 0;
+        isSpinning = false;
+        const selectedSegment = Math.floor((wheelAngle / anglePerSegment) % totalSegments);
+        document.getElementById("result").textContent = `Resultado: ${segments[selectedSegment]}`;
+    }
+
+    // Dibujar la ruleta
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+
+    for (let i = 0; i < totalSegments; i++) {
+        const startAngle = i * anglePerSegment + wheelAngle;
+        const endAngle = startAngle + anglePerSegment;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        // Alternar colores entre amarillo claro y oscuro
+        ctx.fillStyle = i % 2 === 0 ? '#ffcc00' : '#ff9900';
+        ctx.fill();
+
+        // Dibujar el texto del segmento
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate((startAngle + endAngle) / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(segments[i], radius - 10, 10);
+        ctx.restore();
+    }
+
+    // Continuar animando mientras esté girando
+    if (isSpinning) {
+        requestAnimationFrame(animateWheel);
+    }
 }
 
-drawWheel();
+// Dibuja la ruleta al cargar
+function drawWheel() {
+    animateWheel();
+}
