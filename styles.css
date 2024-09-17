@@ -48,6 +48,16 @@ button:hover {
     margin-top: 10px;
 }
 
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
 .wheel-container {
     margin-top: 20px;
 }
