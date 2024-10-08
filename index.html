@@ -1,76 +1,591 @@
-<!DOCTYPE html>
-<html lang="es">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta de Sorteos</title>
-    <link rel="stylesheet" href="styles.css">
+    <base href="https://websim.io/brawlgiz/">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
+         :root {
+            --primary-color: #00ffff;
+            --secondary-color: #ff00ff;
+            --tertiary-color: #ffff00;
+            --background-color: #000033;
+            --text-color: #ffffff;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Exo 2', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 25px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px;
+            padding: 15px 30px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+        
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--secondary-color);
+        }
+        
+        .button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% {
+                left: -50%;
+                top: -50%;
+            }
+            100% {
+                left: 150%;
+                top: 150%;
+            }
+        }
+        
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .button {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        #playButton {
+            animation: float 3s ease-in-out infinite, colorChange 5s infinite alternate;
+        }
+        
+        @keyframes colorChange {
+            0% {
+                background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            }
+            50% {
+                background: linear-gradient(45deg, var(--secondary-color), var(--tertiary-color));
+            }
+            100% {
+                background: linear-gradient(45deg, var(--tertiary-color), var(--primary-color));
+            }
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--text-color);
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%,
+            100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        
+        .player-stats {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            margin: 5px;
+        }
+        
+        .stat-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: var(--background-color);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--primary-color);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px var(--primary-color);
+        }
+        
+        .close {
+            color: var(--text-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: var(--secondary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        #brawlerGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .brawler-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .brawler-card:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        #gameResult {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        
+        #adminPanel {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        
+        #speedControl {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        #speedSlider {
+            width: 200px;
+            margin: 0 10px;
+        }
+        
+        #playerProfile {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .profile-stat {
+            margin: 10px 0;
+        }
+        
+        #dailyRewards {
+            margin-top: 20px;
+        }
+        
+        #missionsList {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .mission-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 10px 0;
+            padding: 10px;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Contenedor de autenticación (login/register) -->
-    <div class="auth-container">
-        <div class="auth-form" id="login">
-            <h2>Iniciar sesión</h2>
-            <input type="text" id="login-username" placeholder="Nombre de usuario">
-            <input type="password" id="login-password" placeholder="Contraseña">
-            <button onclick="login()">Ingresar</button>
-            <p>¿No tienes una cuenta? <a href="#" onclick="showRegister()">Regístrate aquí</a></p>
-            <div class="error" id="login-error"></div>
-        </div>
-
-        <div class="auth-form hidden" id="register">
-            <h2>Registrarse</h2>
-            <input type="text" id="register-username" placeholder="Nombre de usuario">
-            <input type="password" id="register-password" placeholder="Contraseña">
-            <input type="password" id="register-confirm-password" placeholder="Confirmar contraseña">
-            <input type="email" id="register-email" placeholder="Correo electrónico (opcional)">
-            <button onclick="register()">Registrarse</button>
-            <p>¿Ya tienes una cuenta? <a href="#" onclick="showLogin()">Inicia sesión aquí</a></p>
-            <div class="error" id="register-error"></div>
-        </div>
-    </div>
-
-    <!-- Contenedor de perfil (una vez logueado) -->
-    <div class="hidden" id="profile-container">
-        <h2>Perfil de Usuario</h2>
-        <p><strong>Nombre:</strong> <span id="profile-name"></span></p>
-        <p><strong>ID:</strong> <span id="profile-id"></span></p>
-        <p><strong>Veces que ha girado la ruleta:</strong> <span id="spin-count">0</span></p>
-    </div>
-
-    <!-- Contenedor del juego de la ruleta -->
-    <div class="hidden" id="game-container">
-        <h1>¡Gira la Ruleta y Gana!</h1>
-        <div class="content">
-            <div class="wheel-container">
-                <canvas id="wheel" width="500" height="500"></canvas>
-                <button id="spin-btn" onclick="spinWheel()">¡Girar!</button>
-                <p id="ticket-count">Tickets disponibles: 0</p>
-                <div id="result"></div>
+    <div class="stars"></div>
+    <div class="game-container">
+        <h1>Brawl GIZ</h1>
+        <div class="player-stats">
+            <div class="stat">
+                <img src="trophy-icon.svg" alt="Trofeos" class="stat-icon">
+                <span id="trophyCount">0</span>
             </div>
-
-            <div class="ticket-shop">
-                <h2>Compra tus tickets</h2>
-                <div class="ticket-option">
-                    <p>1 Ticket - 1 Euro</p>
-                    <button class="buy-btn" onclick="buyTickets(1)">Comprar</button>
-                </div>
-                <div class="ticket-option">
-                    <p>2 Tickets - 2 Euros</p>
-                    <button class="buy-btn" onclick="buyTickets(2)">Comprar</button>
-                </div>
-                <div class="ticket-option">
-                    <p>10 Tickets - 10 Euros</p>
-                    <button class="buy-btn" onclick="buyTickets(10)">Comprar</button>
-                </div>
+            <div class="stat">
+                <img src="coin-icon.svg" alt="Monedas" class="stat-icon">
+                <span id="coinCount">100</span>
+            </div>
+            <div class="stat">
+                <img src="gem-icon.svg" alt="Gemas" class="stat-icon">
+                <span id="gemCount">10</span>
             </div>
         </div>
-        <button onclick="logout()">Cerrar sesión</button>
+        <button id="playButton" class="button">Play</button>
+        <button id="selectBrawlerButton" class="button">Seleccionar Brawler</button>
+        <button id="profileButton" class="button">Perfil</button>
+        <button id="settingsButton" class="button">Configuración</button>
+        <div id="gameResult"></div>
+        <div id="adminPanel">
+            <h3>Panel de Admin</h3>
+            <div id="speedControl">
+                <span>Velocidad:</span>
+                <input type="range" id="speedSlider" min="1" max="5" value="3">
+                <span id="speedValue">3</span>
+            </div>
+        </div>
+        <div id="dailyRewards">
+            <h3>Recompensa Diaria</h3>
+            <button id="claimRewardButton" class="button">Reclamar</button>
+        </div>
+        <div id="missions">
+            <h3>Misiones</h3>
+            <ul id="missionsList"></ul>
+        </div>
     </div>
 
-    <script src="app.js"></script>
+    <div id="brawlerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Seleccionar Brawler</h2>
+            <div id="brawlerGrid"></div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Configuración</h2>
+            <button id="adminModeButton" class="button">Activar Modo Admin</button>
+            <div id="nameChangeSection">
+                <h3>Cambiar Nombre</h3>
+                <input type="text" id="newNameInput" placeholder="Nuevo nombre">
+                <button id="changeNameButton" class="button">Cambiar Nombre</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Perfil del Jugador</h2>
+            <div id="playerProfile">
+                <div class="profile-stat">Nombre: <span id="playerName"></span></div>
+                <div class="profile-stat">Total de Trofeos: <span id="totalTrophies"></span></div>
+                <div class="profile-stat">Partidas Jugadas: <span id="gamesPlayed"></span></div>
+                <div class="profile-stat">Partidas Ganadas: <span id="gamesWon"></span></div>
+                <div class="profile-stat">Récord de Victoria: <span id="winStreak"></span></div>
+                <h3>Copas por Brawler</h3>
+                <div id="brawlerTrophies"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const brawlers = [
+            "Tigrón", "Aguacate", "Rayo", "Estrella", "Dragón", "Nube", "Tornado", "Fuego",
+            "Hielo", "Roca", "Sombra", "Luz", "Árbol", "Flor", "Luna", "Sol",
+            "Océano", "Montaña", "Relámpago", "Tormenta", "Arcoíris", "Cometa", "Galaxia", "Planeta",
+            "Espejo", "Cristal", "Diamante", "Rubí", "Esmeralda", "Zafiro", "Perla", "Coral",
+            "Volcán", "Isla", "Desierto", "Selva", "Bosque", "Pradera", "Cascada", "Río",
+            "Nieve", "Lava", "Tornado", "Huracán", "Terremoto", "Tsunami", "Avalancha", "Meteoro",
+            "JonathanGIZ", "LoganGIZ"
+        ];
+
+        let gameState = {
+            playerName: "Jugador",
+            trophies: 0,
+            coins: 100,
+            gems: 10,
+            selectedBrawler: null,
+            adminMode: false,
+            gameSpeed: 3,
+            brawlerTrophies: {},
+            gamesPlayed: 0,
+            gamesWon: 0,
+            winStreak: 0,
+            currentWinStreak: 0
+        };
+
+        brawlers.forEach(brawler => {
+            gameState.brawlerTrophies[brawler] = 0;
+        });
+
+        function updateUI() {
+            document.getElementById('trophyCount').textContent = gameState.trophies;
+            document.getElementById('coinCount').textContent = gameState.coins;
+            document.getElementById('gemCount').textContent = gameState.gems;
+            document.getElementById('adminPanel').style.display = gameState.adminMode ? 'block' : 'none';
+            updateProfile();
+        }
+
+        function playGame() {
+            if (!gameState.selectedBrawler) {
+                alert("¡Debes seleccionar un Brawler primero!");
+                return;
+            }
+
+            const resultElement = document.getElementById('gameResult');
+            resultElement.textContent = "Jugando...";
+
+            const delay = gameState.adminMode ? 0 : 3000 / gameState.gameSpeed;
+
+            setTimeout(() => {
+                gameState.gamesPlayed++;
+                if (gameState.adminMode) {
+                    const trophiesWon = 8;
+                    gameState.trophies += trophiesWon;
+                    gameState.brawlerTrophies[gameState.selectedBrawler] += trophiesWon;
+                    resultElement.textContent = `¡Has ganado ${trophiesWon} trofeos!`;
+                    gameState.gamesWon++;
+                    gameState.currentWinStreak++;
+                } else {
+                    const currentBrawlerTrophies = gameState.brawlerTrophies[gameState.selectedBrawler];
+                    let winProbability = Math.max(0.1, 0.5 - (currentBrawlerTrophies / 5000));
+
+                    if (currentBrawlerTrophies > 1250) {
+                        winProbability *= 0.8;
+                    }
+
+                    const win = Math.random() < winProbability;
+                    if (win) {
+                        const trophiesWon = 8;
+                        gameState.trophies += trophiesWon;
+                        gameState.brawlerTrophies[gameState.selectedBrawler] += trophiesWon;
+                        resultElement.textContent = `¡Has ganado ${trophiesWon} trofeos!`;
+                        gameState.gamesWon++;
+                        gameState.currentWinStreak++;
+                    } else {
+                        const trophiesLost = Math.min(5, Math.floor(currentBrawlerTrophies * 0.1));
+                        gameState.trophies = Math.max(0, gameState.trophies - trophiesLost);
+                        gameState.brawlerTrophies[gameState.selectedBrawler] = Math.max(0, currentBrawlerTrophies - trophiesLost);
+                        resultElement.textContent = `Oh no, has perdido ${trophiesLost} trofeos.`;
+                        gameState.currentWinStreak = 0;
+                    }
+                }
+
+                if (gameState.currentWinStreak > gameState.winStreak) {
+                    gameState.winStreak = gameState.currentWinStreak;
+                }
+
+                updateUI();
+            }, delay);
+        }
+
+        function createBrawlerGrid() {
+            const grid = document.getElementById('brawlerGrid');
+            grid.innerHTML = '';
+            brawlers.forEach(brawler => {
+                const card = document.createElement('div');
+                card.className = 'brawler-card';
+                card.textContent = `${brawler} (${gameState.brawlerTrophies[brawler]})`;
+                card.onclick = () => selectBrawler(brawler);
+                grid.appendChild(card);
+            });
+        }
+
+        function selectBrawler(brawler) {
+            gameState.selectedBrawler = brawler;
+            alert(`¡Buen trabajo, seleccionaste a ${brawler}!`);
+            closeModal('brawlerModal');
+        }
+
+        function toggleAdminMode() {
+            const password = prompt("Ingrese la contraseña de administrador:");
+            if (password === "ooo64") {
+                gameState.adminMode = !gameState.adminMode;
+                alert(gameState.adminMode ? "Modo Admin activado: ¡Disfruta de tus victorias sin límites!" : "Modo Admin desactivado");
+                updateUI();
+            } else {
+                alert("Contraseña incorrecta");
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function updateProfile() {
+            document.getElementById('playerName').textContent = gameState.playerName;
+            document.getElementById('totalTrophies').textContent = gameState.trophies;
+            document.getElementById('gamesPlayed').textContent = gameState.gamesPlayed;
+            document.getElementById('gamesWon').textContent = gameState.gamesWon;
+            document.getElementById('winStreak').textContent = gameState.winStreak;
+
+            const brawlerTrophiesElement = document.getElementById('brawlerTrophies');
+            brawlerTrophiesElement.innerHTML = '';
+            Object.entries(gameState.brawlerTrophies).forEach(([brawler, trophies]) => {
+                const brawlerStat = document.createElement('div');
+                brawlerStat.textContent = `${brawler}: ${trophies}`;
+                brawlerTrophiesElement.appendChild(brawlerStat);
+            });
+        }
+
+        function changeName() {
+            const newName = document.getElementById('newNameInput').value.trim();
+            if (newName && !gameState.adminMode && (newName.includes('<') || newName.includes('>') || newName.toLowerCase().includes('giz'))) {
+                alert("El nombre contiene caracteres no permitidos.");
+                return;
+            }
+            if (newName) {
+                gameState.playerName = newName;
+                alert(`Nombre cambiado a: ${newName}`);
+                updateUI();
+            }
+        }
+
+        function claimDailyReward() {
+            const reward = Math.floor(Math.random() * 50) + 50;
+            gameState.coins += reward;
+            alert(`¡Has reclamado tu recompensa diaria de ${reward} monedas!`);
+            document.getElementById('claimRewardButton').disabled = true;
+            updateUI();
+        }
+
+        function generateMissions() {
+            const missions = [{
+                description: "Gana 3 partidas",
+                reward: 20
+            }, {
+                description: "Alcanza 100 trofeos con cualquier brawler",
+                reward: 50
+            }, {
+                description: "Juega 5 partidas",
+                reward: 15
+            }];
+
+            const missionsList = document.getElementById('missionsList');
+            missionsList.innerHTML = '';
+            missions.forEach(mission => {
+                const missionItem = document.createElement('li');
+                missionItem.className = 'mission-item';
+                missionItem.textContent = `${mission.description} - Recompensa: ${mission.reward} monedas`;
+                missionsList.appendChild(missionItem);
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('playButton').addEventListener('click', playGame);
+        document.getElementById('selectBrawlerButton').addEventListener('click', () => {
+            createBrawlerGrid();
+            openModal('brawlerModal');
+        });
+        document.getElementById('profileButton').addEventListener('click', () => {
+            updateProfile();
+            openModal('profileModal');
+        });
+        document.getElementById('settingsButton').addEventListener('click', () => openModal('settingsModal'));
+        document.getElementById('adminModeButton').addEventListener('click', toggleAdminMode);
+        document.getElementById('changeNameButton').addEventListener('click', changeName);
+        document.getElementById('claimRewardButton').addEventListener('click', claimDailyReward);
+
+        document.querySelectorAll('.close').forEach(closeButton => {
+            closeButton.addEventListener('click', () => {
+                closeButton.closest('.modal').style.display = 'none';
+            });
+        });
+
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            gameState.gameSpeed = this.value;
+            document.getElementById('speedValue').textContent = this.value;
+        });
+
+        // Create stars
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+
+        createStars();
+        updateUI();
+        generateMissions();
+    </script>
 </body>
 
 </html>
