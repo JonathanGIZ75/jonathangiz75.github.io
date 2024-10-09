@@ -284,9 +284,89 @@ body {
   margin-bottom: 20px;
   color: var(--primary-color);
 }
+
+#createAccountModal .modal-content {
+  max-width: 400px;
+}
+
+#accountForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+#accountForm input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+}
+
+#accountForm button {
+  align-self: center;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes rainbow {
+  0% { color: red; }
+  14% { color: orange; }
+  28% { color: yellow; }
+  42% { color: green; }
+  57% { color: blue; }
+  71% { color: indigo; }
+  85% { color: violet; }
+  100% { color: red; }
+}
+
+.pulse { animation: pulse 2s infinite; }
+.shake { animation: shake 0.5s infinite; }
+.rainbow { animation: rainbow 5s infinite; }
+
+#playerNameDisplay {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+}
+
+#createAccountModal .modal-content {
+  max-width: 400px;
+}
+
+#accountForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+#accountForm input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+}
+
+#accountForm button {
+  align-self: center;
+}
 </style>
 </head><body><audio id="buttonClickSound" src="button-click.mp3" preload="auto"></audio>
-
 
 <div class="stars"></div>
 <div class="game-container">
@@ -312,6 +392,7 @@ body {
   <button id="settingsButton" class="button">Configuración</button>
   <button id="customizeNameButton" class="button">Personalizar Nombre</button>
   <button id="topButton" class="button">Top</button>
+  <button id="connectAccountButton" class="button">Conectar Cuenta</button>
   <div id="gameResult"></div>
   <div id="adminPanel">
     <h3>Panel de Admin</h3>
@@ -349,7 +430,27 @@ body {
       <input type="text" id="newNameInput" placeholder="Nuevo nombre">
       <button id="changeNameButton" class="button">Cambiar Nombre</button>
     </div>
-    <button id="installMobileButton" class="button">Instalar para móvil</button>
+    <button id="createAccountButton" class="button">Crear Cuenta</button>
+    <button id="connectExistingAccountButton" class="button">Conectar Cuenta Existente</button>
+    <button id="disconnectAccountButton" class="button" style="display: none;">Desconectarse</button>
+  </div>
+</div>
+
+<div id="createAccountModal" class="modal">
+  <div class="modal-content">
+    <span class="close">×</span>
+    <h2>Crear Cuenta</h2>
+    <form id="accountForm">
+      <input type="text" id="usernameInput" placeholder="Nombre de usuario" required="">
+      <input type="password" id="passwordInput" placeholder="Contraseña" required="">
+      <input type="password" id="confirmPasswordInput" placeholder="Confirmar contraseña" required="">
+      <button type="submit" class="button">Crear Cuenta</button>
+    </form>
+    <div>
+      <button id="gmailSignUp" class="button">Registrarse con Gmail</button>
+      <button id="googleSignUp" class="button">Registrarse con Google</button>
+      <button id="facebookSignUp" class="button">Registrarse con Facebook</button>
+    </div>
   </div>
 </div>
 
@@ -375,6 +476,7 @@ body {
     <h2>Perfil del Jugador</h2>
     <div id="playerProfile">
       <div class="profile-stat">Nombre: <span id="playerName"></span></div>
+      <div class="profile-stat">ID de Jugador: <span id="playerId"></span></div>
       <div class="profile-stat">Total de Trofeos: <span id="totalTrophies"></span></div>
       <div class="profile-stat">Partidas Jugadas: <span id="gamesPlayed"></span></div>
       <div class="profile-stat">Partidas Ganadas: <span id="gamesWon"></span></div>
@@ -382,6 +484,7 @@ body {
       <h3>Copas por Brawler</h3>
       <div id="brawlerTrophies"></div>
     </div>
+    <button id="modifyStatisticsButton" class="button">Modificar Estadísticas</button>
   </div>
 </div>
 
@@ -411,6 +514,7 @@ let gameState = {
   gems: 10,
   selectedBrawler: null,
   adminMode: false,
+  fullAdminMode: false,
   gameSpeed: 3,
   brawlerTrophies: {},
   gamesPlayed: 0,
@@ -418,22 +522,26 @@ let gameState = {
   winStreak: 0,
   currentWinStreak: 0,
   nameColor: '',
-  nameAnimation: ''
+  nameAnimation: '',
+  playerId: '',
+  connected: false
 };
 
 brawlers.forEach(brawler => {
   gameState.brawlerTrophies[brawler] = 0;
 });
 
-const topPlayers = [
-  { name: "JonathanGIZ", trophies: 70000 },
-  { name: "Player2", trophies: 54000 },
-];
+const topPlayers = [];
+
+const names = ["Emma", "Liam", "Olivia", "Noah", "Ava", "Ethan", "Sophia", "Mason", "Isabella", "William"];
 
 function generateTopPlayers() {
-  for (let i = 2; i < 99; i++) {
+  topPlayers.length = 0;
+  topPlayers.push({ name: "JonathanGIZ", trophies: 70000 });
+  for (let i = 1; i < 99; i++) {
     const trophies = Math.floor(Math.random() * (54000 - 46000 + 1)) + 46000;
-    topPlayers.push({ name: `Player${i + 1}`, trophies: trophies });
+    const name = i === 1 ? "Player2" : names[Math.floor(Math.random() * names.length)];
+    topPlayers.push({ name: name, trophies: trophies });
   }
   topPlayers.sort((a, b) => b.trophies - a.trophies);
 }
@@ -455,12 +563,13 @@ function updateUI() {
   document.getElementById('adminPanel').style.display = gameState.adminMode ? 'block' : 'none';
   updateProfile();
   updatePlayerNameDisplay();
+  updateAccountUI();
 }
 
 function updatePlayerNameDisplay() {
   const playerNameDisplay = document.getElementById('playerNameDisplay');
   playerNameDisplay.textContent = gameState.playerName;
-  
+
   if (gameState.adminMode) {
     playerNameDisplay.style.color = gameState.nameColor || 'white';
     playerNameDisplay.className = gameState.nameAnimation || '';
@@ -498,7 +607,7 @@ function playGame() {
 
   setTimeout(() => {
     gameState.gamesPlayed++;
-    if (gameState.adminMode) {
+    if (gameState.adminMode && gameState.fullAdminMode) {
       const trophiesWon = 8;
       gameState.trophies += trophiesWon;
       gameState.brawlerTrophies[gameState.selectedBrawler] += trophiesWon;
@@ -508,7 +617,7 @@ function playGame() {
     } else {
       const currentBrawlerTrophies = gameState.brawlerTrophies[gameState.selectedBrawler];
       let winProbability = Math.max(0.1, 0.5 - (currentBrawlerTrophies / 5000));
-      
+
       if (currentBrawlerTrophies > 1250) {
         winProbability *= 0.8;
       }
@@ -560,7 +669,13 @@ function toggleAdminMode() {
   const password = prompt("Ingrese la contraseña de administrador:");
   if (password === "ooo64") {
     gameState.adminMode = !gameState.adminMode;
-    alert(gameState.adminMode ? "Modo Admin activado: ¡Disfruta de tus victorias sin límites!" : "Modo Admin desactivado");
+    gameState.fullAdminMode = true;
+    alert(gameState.adminMode ? "Modo Admin completo activado: ¡Disfruta de tus victorias sin límites!" : "Modo Admin desactivado");
+    updateUI();
+  } else if (password === "admin340") {
+    gameState.adminMode = !gameState.adminMode;
+    gameState.fullAdminMode = false;
+    alert(gameState.adminMode ? "Modo Admin limitado activado: Solo puedes personalizar tu nombre." : "Modo Admin desactivado");
     updateUI();
   } else {
     alert("Contraseña incorrecta");
@@ -577,6 +692,7 @@ function closeModal(modalId) {
 
 function updateProfile() {
   document.getElementById('playerName').textContent = gameState.playerName;
+  document.getElementById('playerId').textContent = gameState.playerId || 'No conectado';
   document.getElementById('totalTrophies').textContent = gameState.trophies;
   document.getElementById('gamesPlayed').textContent = gameState.gamesPlayed;
   document.getElementById('gamesWon').textContent = gameState.gamesWon;
@@ -629,28 +745,130 @@ function generateMissions() {
   });
 }
 
-function openCustomizeNameModal() {
-  if (gameState.adminMode) {
-    openModal('customizeNameModal');
+function openCreateAccountModal() {
+  openModal('createAccountModal');
+}
+
+function validateUsername(username) {
+  return !username.includes('<') && !username.includes('>') && !username.toLowerCase().includes('giz');
+}
+
+function generatePlayerId() {
+  const existingIds = JSON.parse(localStorage.getItem('existingIds') || '[]');
+  let id;
+  do {
+    id = Math.random().toString(36).substring(2, 6);
+  } while (existingIds.includes(id));
+  
+  existingIds.push(id);
+  localStorage.setItem('existingIds', JSON.stringify(existingIds));
+  return id;
+}
+
+function saveProgress() {
+  localStorage.setItem('gameState', JSON.stringify(gameState));
+}
+
+function loadProgress() {
+  const savedState = localStorage.getItem('gameState');
+  if (savedState) {
+    gameState = JSON.parse(savedState);
+    updateUI();
   }
+}
+
+function updateAccountUI() {
+  const connectButton = document.getElementById('connectAccountButton');
+  const disconnectButton = document.getElementById('disconnectAccountButton');
+  
+  if (gameState.connected) {
+    connectButton.style.display = 'none';
+    disconnectButton.style.display = 'block';
+  } else {
+    connectButton.style.display = 'block';
+    disconnectButton.style.display = 'none';
+  }
+}
+
+function connectAccount() {
+  gameState.connected = true;
+  saveProgress();
+  updateAccountUI();
+  alert('Cuenta conectada exitosamente.');
+}
+
+function disconnectAccount() {
+  gameState.connected = false;
+  saveProgress();
+  updateAccountUI();
+  alert('Cuenta desconectada exitosamente.');
+}
+
+function createAccount(event) {
+  event.preventDefault();
+  const username = document.getElementById('usernameInput').value;
+  const password = document.getElementById('passwordInput').value;
+  const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+  if (!validateUsername(username)) {
+    alert("El nombre de usuario contiene caracteres no permitidos.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Las contraseñas no coinciden.");
+    return;
+  }
+
+  gameState.connected = true;
+  gameState.playerName = username;
+  gameState.playerId = generatePlayerId();
+  saveProgress();
+  updateAccountUI();
+  closeModal('createAccountModal');
+  alert('Cuenta creada exitosamente.');
+}
+
+function signUpWithService(service) {
+  switch(service) {
+    case 'Gmail':
+      break;
+    case 'Google':
+      break;
+    case 'Facebook':
+      break;
+  }
+}
+
+function handleCustomizeNameClick() {
+  if (!gameState.adminMode) {
+    alert("Necesitas permiso de administrador para usar esta opción.");
+    return;
+  }
+  openCustomizeNameModal();
+}
+
+function openCustomizeNameModal() {
+  document.getElementById('customNameInput').value = gameState.playerName;
+  document.getElementById('nameColorPicker').value = gameState.nameColor || '#ffffff';
+  document.getElementById('nameAnimationSelect').value = gameState.nameAnimation || 'none';
+  openModal('customizeNameModal');
 }
 
 function applyNameCustomization() {
   const newName = document.getElementById('customNameInput').value.trim();
-  const nameColor = document.getElementById('nameColorPicker').value;
-  const nameAnimation = document.getElementById('nameAnimationSelect').value;
+  const newColor = document.getElementById('nameColorPicker').value;
+  const newAnimation = document.getElementById('nameAnimationSelect').value;
 
   if (newName) {
     gameState.playerName = newName;
-    gameState.nameColor = nameColor;
-    gameState.nameAnimation = nameAnimation;
-    const playerNameElement = document.getElementById('playerName');
-    playerNameElement.textContent = newName;
-    playerNameElement.style.color = nameColor;
-    playerNameElement.className = nameAnimation;
-    alert(`Nombre personalizado aplicado: ${newName}`);
+    gameState.nameColor = newColor;
+    gameState.nameAnimation = newAnimation;
+    updatePlayerNameDisplay();
     closeModal('customizeNameModal');
-    updateUI();
+    alert('Nombre personalizado aplicado con éxito.');
+  } else {
+    alert('Por favor, introduce un nombre válido.');
   }
 }
 
@@ -673,10 +891,7 @@ document.getElementById('settingsButton').addEventListener('click', () => {
   playButtonSound();
   openModal('settingsModal');
 });
-document.getElementById('customizeNameButton').addEventListener('click', () => {
-  playButtonSound();
-  openCustomizeNameModal();
-});
+document.getElementById('customizeNameButton').addEventListener('click', handleCustomizeNameClick);
 document.getElementById('adminModeButton').addEventListener('click', () => {
   playButtonSound();
   toggleAdminMode();
@@ -689,20 +904,30 @@ document.getElementById('claimRewardButton').addEventListener('click', () => {
   playButtonSound();
   claimDailyReward();
 });
-document.getElementById('installMobileButton').addEventListener('click', () => {
+document.getElementById('createAccountButton').addEventListener('click', () => {
   playButtonSound();
-  window.location.href = 'https://websim.io/brawlgiz/download/apk';
+  openCreateAccountModal();
 });
-document.getElementById('applyNameCustomization').addEventListener('click', () => {
+document.getElementById('connectAccountButton').addEventListener('click', () => {
   playButtonSound();
-  applyNameCustomization();
+  if (gameState.connected) {
+    disconnectAccount();
+  } else {
+    connectAccount();
+  }
 });
+document.getElementById('accountForm').addEventListener('submit', createAccount);
+document.getElementById('gmailSignUp').addEventListener('click', () => signUpWithService('Gmail'));
+document.getElementById('googleSignUp').addEventListener('click', () => signUpWithService('Google'));
+document.getElementById('facebookSignUp').addEventListener('click', () => signUpWithService('Facebook'));
 document.getElementById('topButton').addEventListener('click', () => {
   playButtonSound();
   generateTopPlayers();
   displayTopPlayers();
   openModal('topPlayersModal');
 });
+
+document.getElementById('applyNameCustomization').addEventListener('click', applyNameCustomization);
 
 document.querySelectorAll('.close').forEach(closeButton => {
   closeButton.addEventListener('click', () => {
@@ -738,6 +963,7 @@ createStars();
 if (!gameState.playerName || gameState.playerName === "Jugador") {
   promptForUsername();
 }
+loadProgress();
 updateUI();
 generateMissions();
 </script>
